@@ -11,6 +11,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -104,6 +107,30 @@ fun TextAndButton(name: MutableState<String>, nameEntered: MutableState<Boolean>
                 .padding(8.dp)
         ) {
             Text(text = stringResource(id = R.string.done))
+        }
+    }
+}
+
+@Composable
+fun Hello() {
+    // remember, mutableStateOf의 역할에 집중해보자
+    val name = remember {
+        mutableStateOf("")
+    }
+    val nameEntered = remember { mutableStateOf(false) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (nameEntered.value) {
+            Greeting(name = name.value)
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Welcome()
+                TextAndButton(name = name, nameEntered = nameEntered)
+            }
         }
     }
 }
