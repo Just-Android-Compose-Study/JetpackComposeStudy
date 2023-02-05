@@ -14,3 +14,7 @@
 - **mutableStateOf**: 변경될 수 있는 상태 값 생성
 - **remember**: 변경될 수 있는 상태를 기록(기억)
 - **Column()**: 세로로 UI 배치한다.
+
+### Preview 사용
+- preview group 설정 가능
+- showSystemUi 사용해 시스템 UI 프리뷰에 표현 가능

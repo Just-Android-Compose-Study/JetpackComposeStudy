@@ -56,7 +56,14 @@ fun Welcome() {
     )
 }
 
-@Preview(showBackground = true)
+@Preview(
+    showBackground = true,
+    backgroundColor = 0xff00ffff,
+    widthDp = 100,
+    heightDp = 100,
+    showSystemUi = true,
+    group = "test-group"
+)
 @Composable
 fun WelcomePreview() {
     Chapter01Theme {
@@ -65,7 +72,7 @@ fun WelcomePreview() {
 }
 
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, group = "test-group")
 @Composable
 fun GreetingPreview() {
     Chapter01Theme {
@@ -74,6 +81,7 @@ fun GreetingPreview() {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TextAndButton(name: MutableState<String>, nameEntered: MutableState<Boolean>) {
     Row(modifier = Modifier.padding(top = 8.dp)) {
@@ -134,3 +142,21 @@ fun Hello() {
         }
     }
 }
+
+@Composable
+@Preview(group = "test-group2")
+fun PreviewHello() {
+    Chapter01Theme {
+        Hello()
+    }
+}
+
+// 이런 방법도 있지만 너무 불편해보여서 안 쓸란다.
+//class HelloProvider : PreviewParameterProvider<String> {
+//    override val values: Sequence<String>
+//        get() = listOf("PreviewParameterProvider").asSequence()
+//}
+//
+//@Composable
+//@Preview
+//fun AltGreeting2(@PreviewParameter(HelloProvider::class) name: String) {}
