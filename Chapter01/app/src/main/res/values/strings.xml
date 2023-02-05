@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Chapter01</string>
+    <string name="welcome">Welcome!</string>
+    <string name="hello">Hello, %1$s. \nNice to meet you.</string>
 </resources>

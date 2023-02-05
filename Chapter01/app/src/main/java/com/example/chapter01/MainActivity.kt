@@ -9,6 +9,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.chapter01.ui.theme.Chapter01Theme
 
@@ -22,7 +24,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    Welcome()
                 }
             }
         }
@@ -31,13 +33,35 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(name: String) {
-    Text(text = "Hello $name!")
+    Text(
+        text = stringResource(id = R.string.hello, name),
+        textAlign = TextAlign.Center,
+        style = MaterialTheme.typography.labelMedium
+    )
+}
+
+@Composable
+fun Welcome() {
+    Text(
+        text = stringResource(id = R.string.welcome),
+        style = MaterialTheme.typography.labelMedium,
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun DefaultPreview() {
+fun WelcomePreview() {
     Chapter01Theme {
-        Greeting("Android")
+        Welcome()
     }
 }
+
+
+@Preview(showBackground = true)
+@Composable
+fun GreetingPreview() {
+    Chapter01Theme {
+        Greeting("boring-km")
+    }
+}
+
