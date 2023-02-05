@@ -18,3 +18,8 @@
 ### Preview 사용
 - preview group 설정 가능
 - showSystemUi 사용해 시스템 UI 프리뷰에 표현 가능
+
+### 컴포저블 함수
+- 컴포저블 함수는 클래스의 일부가 될 필요가 없다.
+- 가능하다면 최상위 함수로 구현해야 한다.
+- Jetpack Compose는 Context에 접근할 수 있는 대체 수단을 제공한다.

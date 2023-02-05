@@ -25,6 +25,9 @@ import com.example.chapter01.ui.theme.Chapter01Theme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // layoutId 참조가 아닌 setContent 함수 호출
+        // parent: androidx.compose.runtime.CompositionContext 인스턴스
+        // content: UI
         setContent {
             Chapter01Theme {
                 // A surface container using the 'background' color from the theme
@@ -32,7 +35,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Welcome()
+                    Hello()
                 }
             }
         }
