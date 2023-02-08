@@ -3,7 +3,10 @@ package com.example.chapter02
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,5 +42,23 @@ fun Greeting(name: String) {
 fun DefaultPreview() {
     Chapter02Theme {
         Greeting("Android")
+    }
+}
+
+@Composable
+@Preview
+fun ButtonDemo() {
+    Box {
+        Button(
+            onClick = { println("clicked") },
+            enabled = false
+        ) {
+            Text(
+                "Click me!",
+                modifier = Modifier.clickable {
+                    println("text clicked")
+                }
+            )
+        }
     }
 }
