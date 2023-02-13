@@ -50,13 +50,13 @@ BasicText(
 #### BasicText()
 
 > **BasicText**에서 찾은 CoreText 관련 주석
-> 
+>
 > The ID used to identify this CoreText. If this CoreText is removed from the composition tree and then added back, this ID should stay the same.
-> 
+>
 > Notice that we need to update selectable ID when the input text or selectionRegistrar has been updated.
-> 
+>
 > When text is updated, the selection on this CoreText becomes invalid. It can be treated as a brand new CoreText.
-> 
+>
 > When SelectionRegistrar is updated, CoreText have to request a new ID to avoid ID collision.
 
 ![img.png](CoreText.png)
@@ -100,23 +100,6 @@ inline fun Layout(
 #### ReusableComposeNode()
 
 ```kotlin
-/**
- * Emits a recyclable node into the composition of type [T].
- *
- * This function will throw a runtime exception if [E] is not a subtype of the applier of the
- * [currentComposer].
- *
- * @sample androidx.compose.runtime.samples.CustomTreeComposition
- *
- * @param factory A function which will create a new instance of [T]. This function is NOT
- * guaranteed to be called in place.
- * @param update A function to perform updates on the node. This will run every time emit is
- * executed. This function is called in place and will be inlined.
- *
- * @see Updater
- * @see Applier
- * @see Composition
- */
 // ComposeNode is a special case of readonly composable and handles creating its own groups, so
 // it is okay to use.
 @Suppress("NONREADONLY_CALL_IN_READONLY_COMPOSABLE", "UnnecessaryLambdaCreation")
@@ -189,6 +172,135 @@ internal interface ComposeUiNode {
 
 ## UI 구성과 재구성
 
+- Jetpack Compose는 앱 데이터가 변경되어 UI가 변경되어야 하는 경우 개발자가 선제적으로 컴포넌트 트리를 변경하는 행위에 의존하지 않는다.
+- 대신 이러한 변화를 자체적으로 감지하고 영향을 받는 부분만 갱신한다.
+
+### Composable 함수 간 상태 공유
+
+```kotlin
+@Composable
+fun ColorPicker(color: MutableState<Color>) {
+    val red = color.value.red
+    val green = color.value.green
+    val blue = color.value.blue
+    Column {
+        Slider(
+            value = red,
+            onValueChange = { color.value = Color(it, green, blue) })
+        Slider(
+            value = green,
+            onValueChange = { color.value = Color(red, it, blue) })
+        Slider(
+            value = blue,
+            onValueChange = { color.value = Color(red, green, it) })
+    }
+}
+```
+
+- ```ColorPicker()``` 함수가 ```Color```가 아닌 ```MutableState<Color>``` 를 파라미터로 받는 이유
+  - color의 값이 ColorPicker 안에서만 변경될 것이기 때문에 상위 Composable 함수에서 해당 변화에 대해 알 수 있어야 한다.
+
+- 전역 프로퍼티를 사용하는 방식도 있겠지만 이는 권고하지 않는 방식이며, 되도록 Composable 함수의 모습과 행위에 영향을 주는 모든 데이터는 매개변수(parameter)로 전달하는 것이 좋다.
+
+- state hoisting(상태 호이스팅): 상태를 전달받아 Composable 함수를 호출한 곳으로 상태를 옮기는 것
+
+> ### 중요 사항
+>
+> Composable을 SideEffect가 없게 만들자. (동일한 인자로 함수를 반복적으로 호출해도 항상 동일한 결과를 생산함)
+>
+> 호출자로부터 모든 관련 데이터를 얻는 것 이외에도 전역프로퍼티에 의존하거나 예측 불가능한 값을 반환하는 함수 호출하는 것도 금지된다. -> 보통 IDE에서 경고해주는 것 같다.
+
+- Compose UI는 Composable 함수의 중첩 호출로 정의된다.
+- Composable 함수는 UI 요소 또는 UI 요소 계층 구조를 발행한다.
+- UI를 처음 구성하는 것을 Composition이라고 부른다.
+- 앱 데이터 변경 시 UI를 재구성하는 것을 Recomposition이라 부른다.
+- Recomposition은 자동으로 발생한다.
+
+### 크기 제어
+
+- ```fillMaxSize()```, ```fillMAxWidth()```, ```BoxWidthConstraints()``` 등을 잘 활용해보기
+
+### 액티비티 내에서 Composable 계층 구조 나타내기
+
+> #### setContent
+> **parent**: null 값이 가능한 CompositionContext
+> **content**: 선언하는 UI를 위한 Composable function
+
+```kotlin
+// ComponentActivity.kt
+public fun ComponentActivity.setContent(
+    parent: CompositionContext? = null,
+    content: @Composable () -> Unit
+) {
+	// 액티비티가 이미 ComposeView의 인스턴스를 포함하는지 알아내기 위해 사용된다.
+    val existingComposeView = window.decorView
+        .findViewById<ViewGroup>(android.R.id.content)
+        .getChildAt(0) as? ComposeView
+
+    if (existingComposeView != null) with(existingComposeView) {
+        setParentCompositionContext(parent)
+        setContent(content)
+    } else ComposeView(this).apply { // findViewById 실패 시 새로운 인스턴스 생성: ComposeView
+        // Set content and parent **before** setContentView
+        // to have ComposeView create the composition on attach
+        setParentCompositionContext(parent)
+        setContent(content)
+        // Set the view tree owners before setting the content view so that the inflation process
+        // and attach listeners will see them already present
+        setOwners()
+        setContentView(this, DefaultActivityContentLayoutParams)
+    }
+}
+```
+
+```kotlin
+// ComposeView.android.kt AbstractComposeView
+private var parentContext: CompositionContext? = null
+    set(value) {
+        if (field !== value) {
+            field = value
+            if (value != null) {
+                cachedViewTreeCompositionContext = null
+            }
+            val old = composition
+            if (old !== null) {
+                old.dispose()
+                composition = null
+                // Recreate the composition now if we are attached.
+                if (isAttachedToWindow) {
+                    ensureCompositionCreated()
+                }
+            }
+        }
+    }
+```
+
+```kotlin
+// ComposeView.android.kt
+
+// parentContext 대체재 찾기 
+private fun resolveParentCompositionContext() = parentContext
+    ?: findViewTreeCompositionContext()?.cacheIfAlive()
+    ?: cachedViewTreeCompositionContext?.get()?.takeIf { it.isAlive }
+    ?: windowRecomposer.cacheIfAlive()
+
+@Suppress("DEPRECATION") // Still using ViewGroup.setContent for now
+private fun ensureCompositionCreated() {
+    if (composition == null) {
+        try {
+            creatingComposition = true
+            composition = setContent(resolveParentCompositionContext()) {
+                Content()
+            }
+        } finally {
+            creatingComposition = false
+        }
+    }
+}
+```
+
 ## 컴포저블 함수의 행위 수정
+
+-
 
 ## 요약
