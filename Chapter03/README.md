@@ -17,33 +17,33 @@
 
 ```kotlin
 val textColor = color.takeOrElse {
-    style.color.takeOrElse {
-        LocalContentColor.current
-    }
+  style.color.takeOrElse {
+    LocalContentColor.current
+  }
 }
 // NOTE(text-perf-review): It might be worthwhile writing a bespoke merge implementation that
 // will avoid reallocating if all of the options here are the defaults
 val mergedStyle = style.merge(
-    TextStyle(
-        color = textColor,
-        fontSize = fontSize,
-        fontWeight = fontWeight,
-        textAlign = textAlign,
-        lineHeight = lineHeight,
-        fontFamily = fontFamily,
-        textDecoration = textDecoration,
-        fontStyle = fontStyle,
-        letterSpacing = letterSpacing
-    )
+  TextStyle(
+    color = textColor,
+    fontSize = fontSize,
+    fontWeight = fontWeight,
+    textAlign = textAlign,
+    lineHeight = lineHeight,
+    fontFamily = fontFamily,
+    textDecoration = textDecoration,
+    fontStyle = fontStyle,
+    letterSpacing = letterSpacing
+  )
 )
 BasicText(
-    text,
-    modifier,
-    mergedStyle,
-    onTextLayout,
-    overflow,
-    softWrap,
-    maxLines,
+  text,
+  modifier,
+  mergedStyle,
+  onTextLayout,
+  overflow,
+  softWrap,
+  maxLines,
 )
 ```
 
@@ -100,6 +100,23 @@ inline fun Layout(
 #### ReusableComposeNode()
 
 ```kotlin
+/**
+ * Emits a recyclable node into the composition of type [T].
+ *
+ * This function will throw a runtime exception if [E] is not a subtype of the applier of the
+ * [currentComposer].
+ *
+ * @sample androidx.compose.runtime.samples.CustomTreeComposition
+ *
+ * @param factory A function which will create a new instance of [T]. This function is NOT
+ * guaranteed to be called in place.
+ * @param update A function to perform updates on the node. This will run every time emit is
+ * executed. This function is called in place and will be inlined.
+ *
+ * @see Updater
+ * @see Applier
+ * @see Composition
+ */
 // ComposeNode is a special case of readonly composable and handles creating its own groups, so
 // it is okay to use.
 @Suppress("NONREADONLY_CALL_IN_READONLY_COMPOSABLE", "UnnecessaryLambdaCreation")
@@ -299,8 +316,172 @@ private fun ensureCompositionCreated() {
 }
 ```
 
-## 컴포저블 함수의 행위 수정
+## Composable 함수의 행위 수정
 
--
+- 컴포넌트의 프로퍼티와 달리 Modifier는 전적으로 개발자의 판단에 따라 사용될 수 있다.
+- Modifier는 행동이나 정렬, 그리기와 같은 여러 범주 중 하나에 할당될 수 있다. [Modifier 목록 링크](https://developer.android.com/jetpack/compose/modifiers-list)
+
+- Modifier Chaining: 빌더 패턴처럼 Modifier의 속성을 정의
+
+### Modifier 동작 이해
+
+Modifier를 올바르게 사용하지 않으면, IDE에서는 다음과 같은 안내를 해준다.
+
+![Modifier parameter shouble be the first optional parameter](https://velog.velcdn.com/images/kmjin/post/a1ae2dbd-ed62-4ee4-b89f-47ab4a6e2118/image.png)
+
+어떤 경우에 이런 경고가 나오는 지 예시 코드를 보자
+
+- modifier는 첫 번째로 오는 nullable parameter가 되어야 한다. 말이 어려우니까 예시를 보자
+
+```kotlin
+@Composable
+fun TextWithWarning1(
+    name: String = "Default",
+    modifier: Modifier = Modifier,
+    callback: () -> Unit
+) {
+    Text(text = "TextWithWarning1 $name!", modifier = modifier
+        .background(Color.Yellow)
+        .clickable { callback.invoke() })
+}
+
+@Composable
+fun TextWithWarning2(test: Modifier = Modifier, name: String = "", callback: () -> Unit) {
+    Text(text = "TextWithWarning2 $name!", modifier = test
+        .background(Color.Yellow)
+        .clickable { callback.invoke() })
+}
+
+@Composable
+fun TextWithoutWarning(
+    modifier: Modifier = Modifier,
+    buttonModifier: Modifier,
+    name: String = "",
+    callback: () -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = "TextWithoutWarning $name!", modifier = modifier
+            .padding(10.dp) // margin concept
+            .background(Color.Yellow)
+            .padding(10.dp) // real padding
+            .clickable { callback.invoke() })
+
+        val context = LocalContext.current
+        Button(
+            modifier = buttonModifier.clickable {
+                Toast.makeText(context, "버튼에 clickable을 넣으면?", Toast.LENGTH_SHORT).show()
+            },
+            onClick = { Toast.makeText(context, "버튼 클릭됨", Toast.LENGTH_SHORT).show() }) {
+            Text("버튼")
+        }
+    }
+}
+```
+
+- 위의 예시 코드에서 보듯이 nullable한 parameter가 먼저 오게 되면, Composable 함수를 사용할 때 굳이 정의하지 않아도 되는 parameter값의 초기화를 강제받게 된다.
+- 부모 Composable 함수에서 정의한 Modifier를 자식 Composable 함수에서 추가로 설정하기 위해 Modifier를 반드시 받는 구조이기 때문에 NonNull인 Modifier를 맨 앞으로 가져오는 것이 경제적이라고 보면 되겠다.
+- 그리고 잘 보면 변수의 naming도 modifier 이거나 modifier를 사용할 Composable 함수의 이름을 접두사로 사용하면서 camelCase형식으로 적혀있기를 원한다.
+- 그리고 Modifier는 **Modifier 요소의 순서가 있고** 한번 정의하면 재정의할 수 없는 **변경 불가능한 컬렉션**이다.
+
+#### Modifier.then()
+
+```kotlin
+// Background.kt
+fun Modifier.background(
+    color: Color,
+    shape: Shape = RectangleShape
+) = this.then(	// other parameter에 Background 인스턴스가 들어감
+    Background(
+        color = color,
+        shape = shape,
+        inspectorInfo = debugInspectorInfo {
+            name = "background"
+            value = color
+            properties["color"] = color
+            properties["shape"] = shape
+        }
+    )
+)
+```
+
+```kotlin
+// Modifier.kt
+infix fun then(other: Modifier): Modifier =
+    if (other === Modifier) this else CombinedModifier(this, other)
+```
+
+- Background 클래스를 내부적으로 사용하고 있고, 최종적으로 Modifier.Element라는 인터페이스를 implement하고 있다.
+- 이 Modifier.Element 구현체로 UI요소의 공간에 그림을 그릴 수 있다.
+
+```kotlin
+// Background.kt
+private class Background constructor(
+    private val color: Color? = null,
+    private val brush: Brush? = null,
+    private val alpha: Float = 1.0f,
+    private val shape: Shape,
+    inspectorInfo: InspectorInfo.() -> Unit
+) : DrawModifier, InspectorValueInfo(inspectorInfo) {
+	// ...
+}
+
+// DrawModifier.kt
+@JvmDefaultWithCompatibility
+interface DrawModifier : Modifier.Element {
+    fun ContentDrawScope.draw()
+}
+```
+
+### 커스텀 Modifier 구현
+
+- kotlin 문법을 사용해 쉽게 Extension을 구현할 수 있었다.
+- 위에서 봤던 then() 함수에 DrawModifier만 잘 만들면 된다. (마치 View를 확장해서 만들었던 Custom View와 유사해 보인다.)
+
+```kotlin
+fun Modifier.drawWhiteCross() = then(
+    object : DrawModifier {
+        override fun ContentDrawScope.draw() {
+            drawLine(
+                color = Color.White,
+                start = Offset(0F, 0F),
+                end = Offset(size.width - 1, size.height - 1),
+                strokeWidth = 10F
+            )
+            drawLine(
+                color = Color.White,
+                start = Offset(0F, size.height - 1),
+                end = Offset(size.width - 1, 0F),
+                strokeWidth = 10F
+            )
+            drawContent()
+        }
+    }
+)
+
+fun Modifier.drawHiddenCross() = then(
+    object : DrawModifier {
+        override fun ContentDrawScope.draw() {
+            drawContent()
+            drawBehind {
+                drawLine(
+                    color = Color.Blue,
+                    start = Offset(0F, 0F),
+                    end = Offset(size.width - 1, size.height - 1),
+                    strokeWidth = 10F
+                )
+                drawLine(
+                    color = Color.Blue,
+                    start = Offset(0F, size.height - 1),
+                    end = Offset(size.width - 1, 0F),
+                    strokeWidth = 10F
+                )
+            }
+        }
+    }
+)
+```
 
 ## 요약
+
+- Composable 함수가 어떻게 작성되었고, UI를 그리고 사용되었는지 배웠다.
+- Modifier가 무엇이고 어떻게 사용하는 것인지 알아보았다.
