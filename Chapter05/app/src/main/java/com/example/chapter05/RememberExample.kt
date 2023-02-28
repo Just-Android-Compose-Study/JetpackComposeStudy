@@ -2,6 +2,7 @@
 
 package com.example.chapter05
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -92,14 +93,21 @@ fun TemperatureScaleButtonGroup(
 
 // Convert
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
 @Preview
 fun FlowOfEventsDemo() {
     val strCelsius = stringResource(id = R.string.celsius)
     val strFahrenheit = stringResource(id = R.string.fahrenheit)
-    val temperature = remember { mutableStateOf("") }
-    val scale = remember { mutableStateOf(R.string.celsius) }
-    var convertedTemperature by remember { mutableStateOf(Float.NaN) }
+    val temperature = remember {
+        mutableStateOf("")
+    }
+    val scale = remember {
+        mutableStateOf(R.string.celsius)
+    }
+    var convertedTemperature by remember {
+        mutableStateOf(Float.NaN)
+    }
     val calc = {
         val temp = temperature.value.toFloat()
         convertedTemperature = if (scale.value == R.string.celsius)

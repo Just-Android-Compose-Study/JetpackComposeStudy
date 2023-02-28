@@ -16,7 +16,14 @@
             android:exported="true"
             android:theme="@style/Theme.Chapter05">
         </activity>
-        <activity android:name=".ViewModelDemoActivity"/>
+        <activity android:name=".ViewModelDemoActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
