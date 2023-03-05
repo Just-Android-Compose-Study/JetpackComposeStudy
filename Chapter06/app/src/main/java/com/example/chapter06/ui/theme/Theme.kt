@@ -3,24 +3,28 @@ package com.example.chapter06.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = AndroidGreenDark,
+    secondary = OrangeDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = AndroidGreen,
+    secondary = Orange,
+    onPrimary = AndroidGreenDark,
+    onSecondary = OrangeDark
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -43,6 +47,7 @@ fun Chapter06Theme(
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
+            // Android 31 미만에서는 다크모드 X
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         darkTheme -> DarkColorScheme
@@ -58,14 +63,16 @@ fun Chapter06Theme(
             /* the default code did the same cast here - might as well use our new variable! */
             currentWindow.statusBarColor = colorScheme.primary.toArgb()
             /* accessing the insets controller to change appearance of the status bar, with 100% less deprecation warnings */
-            WindowCompat.getInsetsController(currentWindow, view).isAppearanceLightStatusBars =
-                darkTheme
+            WindowCompat
+                .getInsetsController(currentWindow, view)
+                .isAppearanceLightStatusBars = darkTheme
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
-        content = content
+        typography = Typography(labelLarge = TextStyle(fontSize = 24.sp)),
+        content = content,
+        shapes = Shapes(small = CutCornerShape(8.dp))
     )
 }
