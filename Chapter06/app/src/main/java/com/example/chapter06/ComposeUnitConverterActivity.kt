@@ -46,7 +46,7 @@ fun ComposeUnitConverter(factory: ViewModelFactory) {
     val menuItems = listOf("Item #1", "Item #2")
     val snackbarHostState = remember { SnackbarHostState() }
     val snackbarCoroutineScope = rememberCoroutineScope()
-    Chapter06Theme {
+    Chapter06Theme(dynamicColor = false) {
         Scaffold(topBar = {
             ComposeUnitConverterTopBar(menuItems) { s ->
                 snackbarCoroutineScope.launch {
