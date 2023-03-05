@@ -3,17 +3,24 @@ package com.example.chapter06.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import com.example.chapter06.R
 
 private val DarkColorScheme = darkColorScheme(
     primary = AndroidGreenDark,
@@ -23,8 +30,8 @@ private val DarkColorScheme = darkColorScheme(
 private val LightColorScheme = lightColorScheme(
     primary = AndroidGreen,
     secondary = Orange,
-    onPrimary = AndroidGreenDark,
-    onSecondary = OrangeDark
+    onPrimaryContainer = AndroidGreenDark,
+    onSecondaryContainer = OrangeDark
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -51,7 +58,7 @@ fun Chapter06Theme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        else -> LightColorScheme.copy(secondary = colorResource(id = R.color.orange_dark))
     }
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -71,8 +78,40 @@ fun Chapter06Theme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography(labelLarge = TextStyle(fontSize = 24.sp)),
+        typography = Typography.copy(labelLarge = TextStyle(fontSize = 24.sp)),
         content = content,
-        shapes = Shapes(small = CutCornerShape(8.dp))
+        shapes = MaterialTheme.shapes.copy(small = CutCornerShape(8.dp))
     )
+}
+
+@Composable
+@Preview
+fun MaterialThemeDemo() {
+    MaterialTheme(
+        typography = Typography.copy(	// Typography 재사용
+            displayLarge = TextStyle(color = Color.Red)
+        )
+    ) {
+        Row(
+            Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Hello",
+                style = MaterialTheme.typography.displayLarge	// 수정된 MaterialTheme
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            MaterialTheme(
+                typography = Typography.copy(	// Typography 재사용
+                    displayLarge = TextStyle(color = Color.Blue)
+                )
+            ) {
+                Text(
+                    text = "Compose",
+                    style = MaterialTheme.typography.displayLarge // 수정된 MaterialTheme
+                )
+            }
+        }
+    }
 }
