@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.example.chapter06
+package com.example.chapter06.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -20,9 +20,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.chapter06.screens.ComposeUnitConverterScreen
-import com.example.chapter06.screens.DistancesConverter
-import com.example.chapter06.screens.TemperatureConverter
+import com.example.chapter06.R
+import com.example.chapter06.Repository
 import com.example.chapter06.ui.theme.Chapter06Theme
 import com.example.chapter06.viewmodels.ViewModelFactory
 import kotlinx.coroutines.launch

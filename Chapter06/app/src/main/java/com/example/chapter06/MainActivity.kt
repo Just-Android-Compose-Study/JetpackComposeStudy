@@ -3,23 +3,17 @@ package com.example.chapter06
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.chapter06.screens.SplashScreen
+import com.example.chapter06.navigation.SetupNavGraph
+import com.example.chapter06.ui.theme.Chapter06Theme
 
 class MainActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = Screens.Splash) {
-                composable(route = Screens.Splash) {
-                    SplashScreen(navController = navController)
-                }
-                composable(route = Screens.Home) {
-                    HomeScreen(navController = navController)
-                }
+            Chapter06Theme {
+                val navController = rememberNavController()
+                SetupNavGraph(navController = navController)
             }
         }
     }
