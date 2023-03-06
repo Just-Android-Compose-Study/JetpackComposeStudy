@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.chapter06.BuildConfig
 import com.example.chapter06.R
-import com.example.chapter06.Screens
+import com.example.chapter06.navigation.Screen
 import kotlinx.coroutines.delay
 
 @Composable
@@ -40,8 +40,8 @@ fun SplashScreen(navController: NavHostController) = Box(Modifier.fillMaxSize())
             })
         )
         delay(1000)
-        navController.navigate(Screens.Home) {
-            popUpTo(Screens.Splash) {
+        navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Splash.route) {
                 inclusive = true
             }
         }
@@ -65,4 +65,23 @@ fun SplashScreen(navController: NavHostController) = Box(Modifier.fillMaxSize())
             .align(Alignment.BottomCenter)
             .padding(16.dp)
     )
+
+    /*
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = colorResource(id = R.color.black)),
+    ) {
+        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.logo))
+        val logoAnimationState =
+            animateLottieCompositionAsState(composition = composition)
+        LottieAnimation(
+            composition = composition,
+            progress = { logoAnimationState.progress }
+        )
+        if (logoAnimationState.isAtEnd && logoAnimationState.isPlaying) {
+            navController.navigate(Screen.Home.route)
+        }
+    }
+     */
 }
