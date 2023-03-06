@@ -2,9 +2,6 @@
 
 package com.example.chapter06
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -12,6 +9,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModelProvider
@@ -29,14 +27,11 @@ import com.example.chapter06.ui.theme.Chapter06Theme
 import com.example.chapter06.viewmodels.ViewModelFactory
 import kotlinx.coroutines.launch
 
-class ComposeUnitConverterActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val factory = ViewModelFactory(Repository(applicationContext))
-        setContent {
-            ComposeUnitConverter(factory)
-        }
-    }
+@Composable
+fun HomeScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    val factory = ViewModelFactory(Repository(context))
+    ComposeUnitConverter(factory)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
