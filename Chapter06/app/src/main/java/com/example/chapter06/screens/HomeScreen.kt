@@ -38,8 +38,11 @@ fun HomeScreen(navController: NavHostController) {
 fun ComposeUnitConverter(factory: ViewModelFactory) {
     val navController = rememberNavController()
     val menuItems = listOf("Item #1", "Item #2")
+
+    // Material3: ScaffoldState 사용 안하고 바로 snackbarHostState 선언
     val snackbarHostState = remember { SnackbarHostState() }
     val snackbarCoroutineScope = rememberCoroutineScope()
+
     Chapter06Theme(dynamicColor = false) {
         Scaffold(topBar = {
             ComposeUnitConverterTopBar(menuItems) { s ->
