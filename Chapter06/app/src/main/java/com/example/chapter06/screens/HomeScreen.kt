@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -22,21 +21,20 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.chapter06.R
 import com.example.chapter06.Repository
+import com.example.chapter06.navigation.Screens
 import com.example.chapter06.ui.theme.Chapter06Theme
 import com.example.chapter06.viewmodels.ViewModelFactory
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(navController: NavHostController) {
-    val context = LocalContext.current
-    val factory = ViewModelFactory(Repository(context))
-    ComposeUnitConverter(factory)
+fun HomeScreen() {
+    val navController = rememberNavController()
+    ComposeUnitConverter(navController)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ComposeUnitConverter(factory: ViewModelFactory) {
-    val navController = rememberNavController()
+fun ComposeUnitConverter(navController: NavHostController) {
     val menuItems = listOf("Item #1", "Item #2")
 
     // Material3: ScaffoldState 사용 안하고 바로 snackbarHostState 선언
@@ -54,7 +52,7 @@ fun ComposeUnitConverter(factory: ViewModelFactory) {
             ComposeUnitConverterBottomBar(navController)
         }) {
             ComposeUnitConverterNavHost(
-                navController = navController, factory = factory, modifier = Modifier.padding(it)
+                navController = navController, modifier = Modifier.padding(it)
             )
         }
     }
@@ -92,7 +90,7 @@ fun ComposeUnitConverterBottomBar(navController: NavHostController) {
     NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
-        ComposeUnitConverterScreen.screens.forEach { screen ->
+        Screens.homeScreens.forEach { screen ->
             NavigationBarItem(selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                 onClick = {
                     navController.navigate(screen.route) {
@@ -100,12 +98,12 @@ fun ComposeUnitConverterBottomBar(navController: NavHostController) {
                     }
                 },
                 label = {
-                    Text(text = stringResource(id = screen.label))
+                    Text(text = stringResource(id = screen.label!!))
                 },
                 icon = {
                     Icon(
-                        painter = painterResource(id = screen.icon),
-                        contentDescription = stringResource(id = screen.label)
+                        painter = painterResource(id = screen.icon!!),
+                        contentDescription = stringResource(id = screen.label!!)
                     )
                 },
                 alwaysShowLabel = false
@@ -116,19 +114,21 @@ fun ComposeUnitConverterBottomBar(navController: NavHostController) {
 
 @Composable
 fun ComposeUnitConverterNavHost(
-    navController: NavHostController, factory: ViewModelProvider.Factory?, modifier: Modifier
+    navController: NavHostController, modifier: Modifier
 ) {
+    val context = LocalContext.current
+    val factory = ViewModelFactory(Repository(context))
     NavHost(
         navController = navController,
-        startDestination = ComposeUnitConverterScreen.route_temperature,
+        startDestination = Screens.temperature,
         modifier = modifier
     ) {
-        composable(ComposeUnitConverterScreen.route_temperature) {
+        composable(Screens.temperature) {
             TemperatureConverter(
                 viewModel = viewModel(factory = factory)
             )
         }
-        composable(ComposeUnitConverterScreen.route_distances) {
+        composable(Screens.distances) {
             DistancesConverter(
                 viewModel = viewModel(factory = factory)
             )
