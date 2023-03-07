@@ -64,8 +64,237 @@ val colorScheme = when {
 
 SplashScreen을 안드로이드 12 이전에서도 사용할 수 있는 방법도 있다니 찾아보자.
 
+#### values/themes.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.AnimatedSplashScreen" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:windowBackground">@color/black</item>
+    </style>
+</resources>
+```
+
+#### values-31/themes.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.AnimatedSplashScreen" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:windowBackground">@color/black</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/transparent_image</item>
+    </style>
+</resources>
+
+- splash icon을 투명하게 만들고 SplashScreen이 제일 처음에 보이도록 한다. (이렇게 안하면 SplashScreen 앞에 앱 아이콘이 잠시 보임)
+
 ## 툴바와 메뉴 통합
 
+- Scaffold()에서 topBar, bottomBar 정의
+
+```kotlin
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ComposeUnitConverter(factory: ViewModelFactory) {
+    val navController = rememberNavController()	// 화면을 이동하기 위한 NavHostController 생성
+    val menuItems = listOf("Item #1", "Item #2")
+    
+    // Material3: ScaffoldState 사용 안하고 바로 snackbarHostState 선언
+    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarCoroutineScope = rememberCoroutineScope()
+    
+    Chapter06Theme(dynamicColor = false) {
+        Scaffold(topBar = {
+            ComposeUnitConverterTopBar(menuItems) { s ->
+                snackbarCoroutineScope.launch {
+                    snackbarHostState.showSnackbar(s)
+                }
+            }
+        }, bottomBar = {
+            ComposeUnitConverterBottomBar(navController)
+        }) {
+            ComposeUnitConverterNavHost(
+                navController = navController, factory = factory, modifier = Modifier.padding(it)
+            )
+        }
+    }
+}
+```
+
+### 상단 앱 바 생성
+
+- TopAppBar() 사용하면 된다.
+
+```kotlin
+@ExperimentalMaterial3Api
+@Composable
+fun TopAppBar(
+    title: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    navigationIcon: @Composable () -> Unit = {},	// 앱 바 좌측 아이콘
+    actions: @Composable RowScope.() -> Unit = {},	// 앱 바 우측에 들어가는 Row() 
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
+    colors: TopAppBarColors = TopAppBarDefaults.smallTopAppBarColors(),
+    scrollBehavior: TopAppBarScrollBehavior? = null	// 스크롤 상태에 따라 투명도를 조절하는 행동을 넣을 수 있겠다...
+) {
+    SingleRowTopAppBar(
+        modifier = modifier,
+        title = title,
+        titleTextStyle = MaterialTheme.typography.fromToken(TopAppBarSmallTokens.HeadlineFont),
+        centeredTitle = false,
+        navigationIcon = navigationIcon,
+        actions = actions,
+        windowInsets = windowInsets,
+        colors = colors,
+        scrollBehavior = scrollBehavior
+    )
+}
+```
+
+예제 코드에는 DropdownMenu까지 action에 추가해서 보여주고 있지만 여기서는 중요하진 않아서 기록하지는 않겠음.
+
+
 ## 네비게이션 추가
+
+Scaffold()에서 bottomBar로 추가한 BottomAppBar() 알아보기
+
+화면별로 라우팅을 하기 위한 객체가 하나 필요하다.
+
+```kotlin
+sealed class ComposeUnitConverterScreen(
+    val route: String,
+    @StringRes val label: Int,
+    @DrawableRes val icon: Int
+) {
+    companion object {
+        val screens = listOf(
+            Temperature,
+            Distances
+        )
+
+        const val route_temperature = "temperature"
+        const val route_distances = "distances"
+    }
+
+    private object Temperature : ComposeUnitConverterScreen(
+        route_temperature,
+        R.string.temperature,
+        R.drawable.baseline_thermostat_24
+    )
+
+    private object Distances : ComposeUnitConverterScreen(
+        route_distances,
+        R.string.distances,
+        R.drawable.baseline_square_foot_24
+    )
+}
+```
+
+- 이제 이 ComposeUnitConverterScreen 안에 있는 screens 리스트에서 원하는 화면을 고르면 그 화면의 컴포저블 함수를 리턴해준다.
+- 아래는 ```ComposeUnitConverterScreen```를 어떻게 사용하는지 나온다.
+
+```kotlin
+@Composable
+fun ComposeUnitConverterBottomBar(navController: NavHostController) {
+    NavigationBar {
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentDestination = navBackStackEntry?.destination
+        // 모든 스크린 forEach
+        ComposeUnitConverterScreen.screens.forEach { screen ->
+            NavigationBarItem(selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                onClick = {
+	                // 일단 클릭하면 그 화면으로 이동하기
+                    navController.navigate(screen.route) {
+                        launchSingleTop = true
+                    }
+                },
+                label = {
+                	// screen 객체에 이미 정의된 label
+                    Text(text = stringResource(id = screen.label))
+                },
+                icon = {
+                    // screen 객체에 이미 정의된 icon, label
+                    Icon(
+                        painter = painterResource(id = screen.icon),
+                        contentDescription = stringResource(id = screen.label)
+                    )
+                },
+                alwaysShowLabel = false	// 선택되었을 때만 label 보여줌
+            )
+        }
+    }
+}
+```
+
+### NavHostController와 NavHost() 사용
+
+교재는 **섭씨/화씨 변환 기능이 있는 화면**과 **미터/마일 변환 기능이 있는 화면**을 ```NavHostController```와 ```NavHost```를 이용해 전환하는 예제를 보여주고 있다.
+
+```kotlin
+@Composable
+fun ComposeUnitConverterNavHost(
+    navController: NavHostController, factory: ViewModelProvider.Factory?, modifier: Modifier
+) {
+    NavHost(
+        navController = navController,
+        startDestination = ComposeUnitConverterScreen.route_temperature,
+        modifier = modifier
+    ) {
+        composable(ComposeUnitConverterScreen.route_temperature) {
+            TemperatureConverter(
+                viewModel = viewModel(factory = factory)
+            )
+        }
+        composable(ComposeUnitConverterScreen.route_distances) {
+            DistancesConverter(
+                viewModel = viewModel(factory = factory)
+            )
+        }
+    }
+}
+```
+
+근데 아까 위에서 Splash 화면에서 홈화면으로 이동하기 위해서도 이러한 동작이 필요했었다.
+
+MainActivity부터 살펴보자
+
+```kotlin
+class MainActivity: ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            Chapter06Theme {
+                val navController = rememberNavController()
+                SetupNavGraph(navController = navController)
+            }
+        }
+    }
+}
+```
+
+이 Activity에서 이동할 화면들은 모두 NavHostController로 제어한다.
+
+```kotlin
+@Composable
+fun SetupNavGraph(navController: NavHostController) {
+    NavHost(navController = navController, startDestination = Screen.Splash.route) {
+        composable(route = Screen.Splash.route) {
+            SplashScreen(navController = navController)
+        }
+        composable(route = Screen.Home.route) {
+            HomeScreen(navController = navController)
+        }
+    }
+}
+```
+
+여기서는 화면이동 단위를 SplashScreen과 HomeScreen으로 나눴다.
+이 HomeScreen 안에서는 아까 위에서 섭씨/화씨, 미터/마일 변환하는 화면이 나올 것이다.
+그 화면들을 여기서부터 정의하면 어떻게 될까...?
+
+
 
 ## 요약
