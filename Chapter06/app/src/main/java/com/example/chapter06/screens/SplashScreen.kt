@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.chapter06.BuildConfig
 import com.example.chapter06.R
-import com.example.chapter06.navigation.Screen
+import com.example.chapter06.navigation.Screens
 import kotlinx.coroutines.delay
 
 @Composable
@@ -40,11 +40,7 @@ fun SplashScreen(navController: NavHostController) = Box(Modifier.fillMaxSize())
             })
         )
         delay(1000)
-        navController.navigate(Screen.Home.route) {
-            popUpTo(Screen.Splash.route) {
-                inclusive = true
-            }
-        }
+        navController.navigate(Screens.home)
     }
 
     Image(

@@ -10,12 +10,13 @@ import com.example.chapter06.screens.SplashScreen
 
 @Composable
 fun SetupNavGraph(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Screen.Splash.route) {
-        composable(route = Screen.Splash.route) {
+    NavHost(navController = navController, startDestination = Screens.splash) {
+        composable(Screens.splash) {
             SplashScreen(navController = navController)
         }
-        composable(route = Screen.Home.route) {
-            HomeScreen(navController = navController)
+        composable(Screens.home) {
+            // 자체 NavHost 구성
+            HomeScreen()
         }
     }
 }

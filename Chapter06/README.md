@@ -101,11 +101,11 @@ SplashScreen을 안드로이드 12 이전에서도 사용할 수 있는 방법�
 fun ComposeUnitConverter(factory: ViewModelFactory) {
     val navController = rememberNavController()	// 화면을 이동하기 위한 NavHostController 생성
     val menuItems = listOf("Item #1", "Item #2")
-    
+
     // Material3: ScaffoldState 사용 안하고 바로 snackbarHostState 선언
     val snackbarHostState = remember { SnackbarHostState() }
     val snackbarCoroutineScope = rememberCoroutineScope()
-    
+
     Chapter06Theme(dynamicColor = false) {
         Scaffold(topBar = {
             ComposeUnitConverterTopBar(menuItems) { s ->
@@ -206,13 +206,13 @@ fun ComposeUnitConverterBottomBar(navController: NavHostController) {
         ComposeUnitConverterScreen.screens.forEach { screen ->
             NavigationBarItem(selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                 onClick = {
-	                // 일단 클릭하면 그 화면으로 이동하기
+                    // 일단 클릭하면 그 화면으로 이동하기
                     navController.navigate(screen.route) {
                         launchSingleTop = true
                     }
                 },
                 label = {
-                	// screen 객체에 이미 정의된 label
+                    // screen 객체에 이미 정의된 label
                     Text(text = stringResource(id = screen.label))
                 },
                 icon = {
@@ -285,7 +285,7 @@ fun SetupNavGraph(navController: NavHostController) {
             SplashScreen(navController = navController)
         }
         composable(route = Screen.Home.route) {
-            HomeScreen(navController = navController)
+            HomeScreen()
         }
     }
 }
@@ -293,8 +293,28 @@ fun SetupNavGraph(navController: NavHostController) {
 
 여기서는 화면이동 단위를 SplashScreen과 HomeScreen으로 나눴다.
 이 HomeScreen 안에서는 아까 위에서 섭씨/화씨, 미터/마일 변환하는 화면이 나올 것이다.
-그 화면들을 여기서부터 정의하면 어떻게 될까...?
+그 화면들을 여기서 전부 통합해 정의하면 어떻게 될까...?
 
 
+```kotlin
+@Composable
+fun SetupNavGraph(navController: NavHostController) {
+    NavHost(navController = navController, startDestination = ComposeUnitConverterScreen.splash) {
+        composable(ComposeUnitConverterScreen.splash) {
+            SplashScreen(navController = navController)
+        }
+        composable(ComposeUnitConverterScreen.temperature) {
+            HomeScreen(navController = navController)
+        }
+        composable(ComposeUnitConverterScreen.distances) {
+            HomeScreen(navController = navController)
+        }
+    }
+}
+```
 
-## 요약
+이렇게 구성했더니 HomeScreen에서 화면을 이동할 때마다 깜빡거린다. 확실히 이건 잘못된 방법이었다. ㅠㅠ
+
+이 예제는 Navigation 기능을 사용해 화면을 이동하는 예제다 보니 화면 전환했던 기록이 전부 쌓여있어서 Back 버튼을 누르면 이전 화면으로 되돌아가는게 보인다. (데이터도 이전 화면의 데이터가 남아있음)
+
+그리고 ViewModelFactory를 사용하다보니 화면을 새로 만들면서도 이전 값이 유지 되면서 생성된다는 점도 같이 확인하면 되겠다.
