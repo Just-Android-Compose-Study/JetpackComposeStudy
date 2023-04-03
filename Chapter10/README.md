@@ -213,3 +213,38 @@ class BoxButtonDemoTest {
 ```
 
 ## 컴포즈 앱 디버깅
+
+직접 해보는게 제일 좋을 것 같다.
+
+#### 추가적인 팁
+- 커스텀 Modifier를 통한 현재 기본값 출력
+- inspectorInfo parameter
+- 디버그 인스펙터 정보 확인하기
+
+```kotlin
+isDebugInspectorInfoEnabled = true  // InspectableValue.kt 전역변수 설정
+
+Modifier.semantics { backgroundColor = color }.also {
+        (it as CombinedModifier).run {
+            val inner = this.javaClass.getDeclaredField("inner")
+            inner.isAccessible = true
+            val value = inner.get(this) as InspectorValueInfo
+            value.inspectableElements.forEach { ve: ValueElement ->
+                Log.i("ValueElement", "value element: $ve") // 원하는 대로 값을 뽑아 사용 가능
+            }
+        }
+    }
+```
+그래서 나온 결과는 아래와 같았다.
+
+```text
+I/ValueElement: value element: ValueElement(name=mergeDescendants, value=false)
+I/ValueElement: value element: ValueElement(name=properties, value=Function1<androidx.compose.ui.semantics.SemanticsPropertyReceiver, kotlin.Unit>)
+```
+
+## 요약 및 더 읽을거리
+
+- 기본적 테스트 작성법과 디버깅 방법 안내를 받았다.
+- 구글 Android Compose Test 문서 확인하기
+- JUnit, Kotest에 대해 더 알아보기
+- 테스트 자동화 알아보기

@@ -1,6 +1,7 @@
 package com.boringkm.chapter10
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -15,9 +16,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.CombinedModifier
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.InspectorValueInfo
+import androidx.compose.ui.platform.ValueElement
+import androidx.compose.ui.platform.isDebugInspectorInfoEnabled
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -81,12 +86,22 @@ var SemanticsPropertyReceiver.backgroundColor by BackgroundColorKey
 
 @Composable
 fun BoxButtonDemo() {
+    isDebugInspectorInfoEnabled = true  // InspectableValue.kt 전역변수 설정
     var color by remember { mutableStateOf(COLOR1) }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .testTag(TAG1)
-            .semantics { backgroundColor = color }
+            .semantics { backgroundColor = color }.also {
+                (it as CombinedModifier).run {
+                    val inner = this.javaClass.getDeclaredField("inner")
+                    inner.isAccessible = true
+                    val value = inner.get(this) as InspectorValueInfo
+                    value.inspectableElements.forEach { ve: ValueElement ->
+                        Log.i("ValueElement", "value element: $ve")
+                    }
+                }
+            }
             .background(color = color),
         contentAlignment = Alignment.Center
     ) {
