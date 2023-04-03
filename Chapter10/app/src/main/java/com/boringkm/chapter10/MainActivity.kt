@@ -3,8 +3,12 @@ package com.boringkm.chapter10
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -12,8 +16,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.boringkm.chapter10.ui.theme.Chapter10Theme
 
 class MainActivity : ComponentActivity() {
@@ -26,23 +37,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+//                    SimpleButtonDemo()
+                    ImageDemo()
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    Chapter10Theme {
-        Greeting("Android")
     }
 }
 
@@ -55,10 +54,49 @@ fun SimpleButtonDemo() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Button(onClick = {
+        Text(text = text, modifier = Modifier.clickable {
             text = if (text == a) b else a
+        })
+    }
+}
+
+@Composable
+fun ImageDemo() {
+    Image(
+        painter = painterResource(id = R.drawable.ic_baseline_airport_shuttle_24),
+        contentDescription = stringResource(id = R.string.airport_shuttle),
+        contentScale = ContentScale.FillBounds,
+        modifier = Modifier
+            .size(width = 128.dp, height = 128.dp)
+            .background(Color.Blue)
+    )
+}
+
+val COLOR1 = Color.White
+val COLOR2 = Color.LightGray
+const val TAG1 = "BoxButtonDemo"
+
+val BackgroundColorKey = SemanticsPropertyKey<Color>("BackgroundColor")
+var SemanticsPropertyReceiver.backgroundColor by BackgroundColorKey
+
+@Composable
+fun BoxButtonDemo() {
+    var color by remember { mutableStateOf(COLOR1) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(TAG1)
+            .semantics { backgroundColor = color }
+            .background(color = color),
+        contentAlignment = Alignment.Center
+    ) {
+        Button(onClick = {
+            color = if (color == COLOR1)
+                COLOR2
+            else
+                COLOR1
         }) {
-            Text(text = text)
+            Text(text = stringResource(id = R.string.toggle))
         }
     }
 }

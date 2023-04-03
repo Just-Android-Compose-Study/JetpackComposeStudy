@@ -89,4 +89,127 @@ class SimpleInstrumentedTest {
 
 ## 시맨틱 이해
 
+교재 내용에서 제대로 동작하지 않는 예제가 있어 수정했다.
+
+```kotlin
+@Test
+fun A에서_버튼을_누르면_B로_텍스트가_바뀐다() {
+    rule.onNodeWithText("A").performClick()
+    rule.onNodeWithText("B").assertExists()
+}
+```
+
+- ```onNode()```, ```onAllNodes()``` 모두 **finder**로 불리며, 주어진 조건과 일치하는 semantic 노드를 찾아 반환한다.
+
+1. "A"가 적혀있는 텍스트를 찾아 클릭을 한다.
+2. "B"가 적혀있는 텍스트가 존재하는지 확인한다.
+
+- 아래는 기존 예제
+
+```kotlin
+@Test
+fun A에서_버튼을_누르면_B로_텍스트가_바뀐다() {
+    rule.onNodeWithText("A")
+        .performClick() // performClick() 이후 assert()가 불가능하다.
+        .assert(hasText("B"))
+}
+```
+
+### 시맨틱 노드로 작업
+
+- 시맨틱 노드 로그 출력하기 ```printToLog("테스트명")```
+- 이미지 노드 테스트
+
+```kotlin
+@Composable
+fun ImageDemo() {
+    Image(
+        painter = painterResource(id = R.drawable.ic_baseline_airport_shuttle_24),
+        contentDescription = stringResource(id = R.string.airport_shuttle),
+        contentScale = ContentScale.FillBounds,
+        modifier = Modifier
+            .size(width = 128.dp, height = 128.dp)
+            .background(Color.Blue)
+    )
+}
+```
+
+```kotlin
+@RunWith(AndroidJUnit4::class)
+class ContentDescriptionTest {
+
+    @get:Rule
+    val rule = createComposeRule()
+
+    @Test
+    fun 공항셔틀을_ContentDescription으로_설정한_이미지의_가로_길이는_128dp다() {
+        var contentDescription = ""
+        rule.setContent {
+            ImageDemo()
+            contentDescription = stringResource(id = R.string.airport_shuttle)
+        }
+        rule.onNodeWithContentDescription(contentDescription)
+            .assertWidthIsEqualTo(128.dp)
+            .printToLog("")
+    }
+}
+```
+
+### 커스텀 시맨틱 프로퍼티 추가
+
+테스트에서 추가적인 정보를 노출하고 싶은 경우에는 커스텀 시맨틱 프로퍼티를 생성해 제공할 수 있다.
+
+- 요구사항 1: SemanticsPropertyKey를 정의한다.
+- 요구사항 2: SemanticsPropertyReceiver를 통해 사용할 수 있게 해준다.
+
+```semantics { }``` 블록 내부에서 타입 안정성을 보장받는 상태로 key-value pair 저장이 가능하다.
+
+```kotlin
+// 1. 사전 정의
+val BackgroundColorKey = SemanticsPropertyKey<Color>("BackgroundColor")
+var SemanticsPropertyReceiver.backgroundColor by BackgroundColorKey
+
+// 2. Composable 작성
+@Composable
+fun BoxButtonDemo() {
+    var color by remember { mutableStateOf(COLOR1) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(TAG1)
+            .semantics { backgroundColor = color }  // 프로퍼티 설정
+            .background(color = color),
+        contentAlignment = Alignment.Center
+    ) {
+        Button(onClick = {
+            color = if (color == COLOR1)
+                COLOR2
+            else
+                COLOR1
+        }) {
+            Text(text = stringResource(id = R.string.toggle))
+        }
+    }
+}
+```
+
+```kotlin
+// 3. 테스트 코드에서 접근
+@RunWith(AndroidJUnit4::class)
+class BoxButtonDemoTest {
+
+    @get:Rule
+    val rule = createComposeRule()
+
+    @Test
+    fun 텍스트박스의_배경색이_COLOR1인_노드가_존재한다() {
+        rule.setContent {
+            BoxButtonDemo()
+        }
+        // SemanticsMatcher의 expectValue()와 해당 프로퍼티 key 값을 이용해 값이 동일한지 확인한다.
+        rule.onNode(SemanticsMatcher.expectValue(BackgroundColorKey, COLOR1)).assertExists()    // equals가 아닌 일치하는 Node가 있는지 존재 유무를 따짐
+    }
+}
+```
+
 ## 컴포즈 앱 디버깅

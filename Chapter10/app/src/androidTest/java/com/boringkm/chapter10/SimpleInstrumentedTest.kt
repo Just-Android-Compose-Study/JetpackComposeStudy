@@ -1,9 +1,10 @@
 package com.boringkm.chapter10
 
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,6 +33,11 @@ class SimpleInstrumentedTest {
         }
     }
 
+    @After
+    fun finish() {
+        println("finished")
+    }
+
     @Test
     fun testInitialLetterIsA() {
         // onNodeWithText: finder라 불린다. 시맨틱 노드에서 동작한다.
@@ -43,5 +49,11 @@ class SimpleInstrumentedTest {
     @Test
     fun testPrintMethodName() {
         println(name.methodName)
+    }
+
+    @Test
+    fun A에서_버튼을_누르면_B로_텍스트가_바뀐다() {
+        rule.onNodeWithText("A").performClick()
+        rule.onNodeWithText("B").assertExists().printToLog("A에서_버튼을_누르면_B로_텍스트가_바뀐다")
     }
 }
